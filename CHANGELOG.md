@@ -30,6 +30,13 @@
 - Govern the repository: rulesets for `main` (pull requests, a single
   `ci-ok` check, no force pushes) and for `v*` tags, `CODEOWNERS`, CodeQL,
   the OpenSSF Scorecard, and a `GOVERNANCE.md`.
+- Add real agent examples in `examples/agents/`: a data analyst and a coding
+  agent on Pydantic AI and a support agent on Strands Agents, calling Claude
+  on Bedrock, with a docs page of real transcripts and CI tests that use
+  scripted models. The framework dependencies live in a new `agents` group.
+- Put the permissions and host function signatures before `Args:` in the
+  docstring `pynox.tool()` generates, because Strands and other
+  Google-style readers drop everything after it; resolve string annotations.
 - Add four agent use cases (data analyst, support, coding, API) as runnable
   examples tested on every commit, with a use cases page built from their
   real output.

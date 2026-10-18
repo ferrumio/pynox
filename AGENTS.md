@@ -21,6 +21,9 @@ native optimizations, in one Linux binary that also works as `python`.
 - Pool reuse is explicit. Never reuse task globals or fork the threaded supervisor.
 - Linux only (glibc and musl, x86_64 and aarch64). Do not add platform guards
   or macOS paths without a new ADR.
+- `examples/agents/` holds real framework agents (Pydantic AI, Strands); their
+  dependencies are the `agents` group, glibc only. `tests/test_agent_examples.py`
+  drives them with scripted models; never call a real model from tests.
 - Agent integrations are product: `examples/agent_tool.py` and
   `examples/monty_bridge.py` run in the test suite; the pool protocol is a
   public contract and changes need an ADR.

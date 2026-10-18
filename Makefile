@@ -4,6 +4,7 @@ export PYNOX_PYTHON_VERSION
 UV_PYTHON ?= $(or $(PYO3_PYTHON),$(PYNOX_PYTHON_VERSION))
 export UV_PYTHON
 PYTEST_ARGS ?=
+PYTEST_GROUPS ?=
 setup:
 	uv sync --locked
 build:
@@ -17,7 +18,7 @@ check:
 test-rust:
 	bash scripts/build.sh --test
 test: build test-rust
-	uv run --locked --group integration pytest $(PYTEST_ARGS)
+	uv run --locked --group integration $(PYTEST_GROUPS) pytest $(PYTEST_ARGS)
 docs:
 	uv run --locked python scripts/prepare_docs.py
 	uv run --locked --group docs zensical build

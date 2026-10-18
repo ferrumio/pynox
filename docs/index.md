@@ -34,7 +34,9 @@ them:
 | [Coding agent](guides/use-cases.md#coding-agent) | "Fix the bug and run the tests." | The tests run; the one that deletes `~/important-notes` fails instead |
 | [API agent](guides/use-cases.md#api-agent) | "What's the weather in Lisbon?" | Only the tool you granted gets the network and the key |
 
-Each one is a runnable example tested on every commit.
+Each one is a runnable example tested on every commit. [Real agents](guides/real-agents.md)
+shows the same patterns with Pydantic AI, Strands Agents and Claude, copied from
+real runs: five Python runs for a full analysis cost 7 ms inside Pynox.
 
 ## Three ways to run
 
@@ -62,6 +64,7 @@ machine and keeps the whole Python ecosystem on the model's side of it.
 
 | Guide | What you learn |
 | --- | --- |
+| [Real agents](guides/real-agents.md) | Pydantic AI and Strands agents on Claude, transcripts from real runs |
 | [Use cases](guides/use-cases.md) | Data analyst, support, coding and API agents, with real output |
 | [Agents](guides/agents.md) | Turn the pool into a tool; permissions, results, errors, frameworks |
 | [Pool protocol](guides/pool.md) | Every request and result field; profiles and limits |

@@ -1,5 +1,9 @@
 # Use cases
 
+!!! tip "Want to see a real model do it?"
+    [Real agents](real-agents.md) runs the analyst, support and coding agents with
+    Pydantic AI, Strands Agents and Claude, with transcripts from real runs.
+
 Five agents people build with Pynox. Each one is a runnable file in
 `examples/use_cases/`, exercised by the test suite on every commit, so the
 output below is what the code prints. The model's code is fixed text in each

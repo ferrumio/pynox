@@ -17,9 +17,14 @@ export UV_PYTHON="$PYNOX_PYTHON_VERSION"
 if [[ "$PYNOX_LINUX_FAMILY" == gnu ]]; then
     export PYNOX_GLIBC_MAX=2.28
 fi
-uv sync --locked --group integration
+groups=(--group integration)
+if [[ "$PYNOX_LINUX_FAMILY" == gnu ]]; then
+    # Agent framework examples; some of their dependencies have no musl wheels.
+    groups+=(--group agents)
+fi
+uv sync --locked "${groups[@]}"
 make check
-make test PYTEST_ARGS="--junitxml=dist/tests-${PYNOX_PYTHON_VERSION}-linux-${PYNOX_LINUX_FAMILY}.xml"
+make test PYTEST_GROUPS="${groups[*]:2}" PYTEST_ARGS="--junitxml=dist/tests-${PYNOX_PYTHON_VERSION}-linux-${PYNOX_LINUX_FAMILY}.xml"
 make bundle
 uv run --locked python scripts/check_install.py
 make wheel

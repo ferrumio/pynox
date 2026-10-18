@@ -37,8 +37,11 @@ agent = Agent("anthropic:claude-sonnet-4-5", tools=[pynox.tool(allow_read=["data
 | [API agent](docs/guides/use-cases.md#api-agent) with a key | Only the tool you granted gets the network and the key |
 
 Each case is a runnable file in [`examples/use_cases/`](examples/use_cases/),
-run by the test suite on every commit. The rest of this page starts from
-plain Python and builds up to agents.
+run by the test suite on every commit. [`examples/agents/`](examples/agents/)
+has the same agents built with Pydantic AI and Strands Agents on Claude; in a
+[real run](docs/guides/real-agents.md), a complete analysis took five Python runs
+and 7 ms inside Pynox. The rest of this page starts from plain Python and
+builds up to agents.
 
 ## Run a script
 
@@ -223,7 +226,7 @@ pynox --version
 Full documentation: **[ferrumio.github.io/pynox](https://ferrumio.github.io/pynox/)**.
 
 - [Getting started](docs/getting-started.md)
-- [Use cases](docs/guides/use-cases.md), [agents](docs/guides/agents.md), [pool protocol](docs/guides/pool.md), [Monty](docs/guides/monty.md)
+- [Real agents](docs/guides/real-agents.md), [use cases](docs/guides/use-cases.md), [agents](docs/guides/agents.md), [pool protocol](docs/guides/pool.md), [Monty](docs/guides/monty.md)
 - [Commands](docs/usage.md) and the [sandbox contract](docs/sandbox.md)
 - [Deploy](docs/deploy.md), [installation](docs/distribution.md), [performance](docs/performance.md)
 - [Architecture decisions](ADR/README.md) and [security scope](SECURITY.md)

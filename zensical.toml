@@ -10,6 +10,7 @@ nav = [
     "getting-started.md",
   ] },
   { "Agents" = [
+    "guides/real-agents.md",
     "guides/use-cases.md",
     "guides/agents.md",
     "guides/pool.md",

@@ -139,6 +139,10 @@ it: it is controlled automation, not a boundary for hostile code.
 
 ## Registering with a framework
 
+[Real agents](real-agents.md) has complete Pydantic AI and Strands Agents
+examples, tested in CI, with transcripts from real runs.
+
+
 Any framework that accepts a typed, documented Python function accepts
 `pynox.tool()`. The snippets show the shape; `examples/agent_tool.py` and
 `examples/monty_bridge.py` run in Pynox's test suite, the framework lines do
