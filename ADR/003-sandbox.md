@@ -4,6 +4,8 @@
 
 Accepted — 2026-10-17. Revised 2026-10-18: the sandbox became the default
 again once its output was decoupled from the JSON result (ADR 007).
+Revised again on 2026-10-18: replace seccomp's syscall denylist with an
+explicit allowlist, retaining the tested network, thread and ABI contracts.
 
 ## Context
 
@@ -36,6 +38,31 @@ Cold execution applies policy before CPython initialization; pool templates
 hold only trusted setup. Workers run in UTF-8 mode like stock CPython under
 `C.UTF-8`.
 
+Seccomp permits an explicit set of native x86_64/aarch64 syscalls and returns
+`EPERM` for unlisted calls or arguments. The source is the public Moby default
+profile at **v28.0.4**, commit
+`6430e49a55babd9b8f4d08e70ecb2b68900770fe`
+([profile](https://github.com/moby/moby/blob/6430e49a55babd9b8f4d08e70ecb2b68900770fe/profiles/seccomp/default.json)),
+adapted rather than copied wholesale: retain file I/O, memory, signal handling,
+clocks, libc thread support and event loops. Omit container-only allowances for
+processes, host IPC, identity/capability changes and kernel administration.
+Landlock continues to mediate allowed file operations.
+
+The network grant adds IPv4/IPv6 socket creation and connection operations.
+Without it, only unnamed Unix stream socketpairs can be created, including
+their close-on-exec/nonblocking variants. Existing descriptor I/O remains
+available for asyncio. `clone` requires `CLONE_THREAD`; `prlimit64` can only
+query the current process. `prctl` is limited to thread names and selected
+read-only queries.
+
+Two existing exceptions remain explicit: `clone3` returns `ENOSYS`, as in
+Moby, so libc can fall back to thread-only `clone`; an incompatible audit
+architecture or x32 ABI retains the existing fatal rejection. Thus `EPERM`
+is the default for unknown **native** syscalls, not a change to the tested
+x32 `SignalError` contract. Install the compatibility/ABI filters before the
+final allowlist; the final layer does not grant further filter installation.
+No task runs if any layer fails.
+
 ## Alternatives considered
 
 - Plain Python by default with an opt-in subcommand: compatible, but the
@@ -48,6 +75,12 @@ hold only trusted setup. Workers run in UTF-8 mode like stock CPython under
   the non-interactive contract is stable.
 - Namespaces, containers or microVMs: stronger boundaries with separate
   operational costs; candidates for later layers, not replacements.
+- Keep a syscall denylist: silently admits new kernel interfaces, leaving the
+  effective policy dependent on kernel upgrades.
+- Copy the Docker profile unchanged: it assumes container namespaces and
+  capabilities that a Pynox worker does not have.
+- Return `EPERM` for `clone3`: breaks glibc's fallback and ordinary Python
+  threads. Return `EPERM` for x32: changes an existing contract assertion.
 
 ## Consequences
 
@@ -63,3 +96,16 @@ must be `--no-sandbox` explicitly, and the platform's own isolation is the
 boundary. Metadata visibility, persistent writes and the absence of domain
 allowlists remain disclosed limits. Full hostile-code containment is not
 claimed.
+
+Kernel upgrades no longer implicitly grant new syscalls. A new CPython, libc
+or native package may need an explicit policy addition; denied native calls
+return an errno so Python can report an exception when it handles that error.
+This is not a promise that every native library recovers from a denied call.
+The x86_64 legacy entry points and aarch64 interfaces are tested separately on
+glibc and musl for all five supported CPython minors.
+
+Rust unit tests evaluate emitted BPF and stacked actions without installing
+filters in the test process. Existing cold, pool and preload contract tests
+remain unchanged. Record paired startup measurements with this change; keep
+historical benchmark artifacts intact. Adversarial validation remains a
+separate external review.

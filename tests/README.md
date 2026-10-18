@@ -24,6 +24,7 @@ logic without making it public or entering release builds.
 | [pool.rs](rust/pool.rs) | Request validation, defaults, environment separation and bounded JSONL framing |
 | [capture.rs](rust/capture.rs) | Nonblocking pipes, byte limits, draining and descriptor flags |
 | [diagnostics.rs](rust/diagnostics.rs) | Linux supervision: output capture, interrupted reads, timeout/signal precedence and structured results |
+| [sandbox.rs](rust/sandbox.rs) | Generated seccomp BPF decisions: allowlist/default errno, network, threads, resource queries and ABI compatibility; no filter installed in the test process |
 
 These tests do not initialize CPython or apply a sandbox to the test runner.
 They exercise Rust logic and real pipes; kernel enforcement is checked in

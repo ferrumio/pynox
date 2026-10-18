@@ -1,0 +1,1309 @@
+{
+  "runtime": {
+    "architecture": "aarch64",
+    "landlock_abi": 7,
+    "note": "Kernel probes only; a sandboxed run still verifies the complete policy setup.",
+    "os": "linux",
+    "platform": "linux-gnu-aarch64",
+    "python": {
+      "abi": "cp311",
+      "executable": "/home/ec2-user/.local/share/uv/python/cpython-3.11.17-linux-aarch64-gnu/bin/python3.11",
+      "home": "/home/ec2-user/.local/share/uv/python/cpython-3.11.17-linux-aarch64-gnu",
+      "libdir": "/home/ec2-user/.local/share/uv/python/cpython-3.11.17-linux-aarch64-gnu/lib",
+      "major_minor": "3.11",
+      "platstdlib": "/home/ec2-user/.local/share/uv/python/cpython-3.11.17-linux-aarch64-gnu/lib/python3.11",
+      "site_packages": [
+        "/home/ec2-user/.local/share/uv/python/cpython-3.11.17-linux-aarch64-gnu/lib/python3.11/site-packages"
+      ],
+      "stdlib": "/home/ec2-user/.local/share/uv/python/cpython-3.11.17-linux-aarch64-gnu/lib/python3.11",
+      "version": "3.11.17"
+    },
+    "runtime": "pynox",
+    "runtime_supported": true,
+    "sandbox_supported": true,
+    "sandbox_unavailable_reasons": [],
+    "supported": true,
+    "version": "0.1.0"
+  },
+  "measured_at": "2026-10-18T10:35:52.093937+00:00",
+  "python_build": {
+    "CONFIG_ARGS": "'--build=aarch64-unknown-linux-gnu' '--host=aarch64-unknown-linux-gnu' '--prefix=/install' '--with-openssl=/tools/deps' '--with-system-expat' '--without-ensurepip' '--with-readline=editline' '--with-system-libmpdec' '--enable-static-libpython-for-interpreter' '--enable-shared' '--enable-optimizations' '--with-lto=full' '--with-build-python=/tools/host/bin/python3.11' '--with-dbmliborder=bdb' 'build_alias=aarch64-unknown-linux-gnu' 'host_alias=aarch64-unknown-linux-gnu' 'PKG_CONFIG=pkg-config --static' 'PKG_CONFIG_PATH=/tools/deps/share/pkgconfig:/tools/deps/lib/pkgconfig' 'CC=clang' 'CFLAGS= -O3 -fstack-protector -fstack-clash-protection -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC ' 'LDFLAGS= -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--build-id=sha1 -Wl,--exclude-libs,ALL' 'CPPFLAGS= -O3 -fstack-protector -fstack-clash-protection -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC ' 'PROFILE_TASK=-m test --pgo -j 4'",
+    "CC": "cc -pthread",
+    "CFLAGS": "-Wsign-compare -Wunreachable-code -DNDEBUG -g -fwrapv -O3 -Wall -O3 -fstack-protector -fstack-clash-protection -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC",
+    "Py_GIL_DISABLED": null
+  },
+  "modes": {
+    "cpython": "Stock CPython executable from the same distribution (static libpython)",
+    "no_sandbox": "`pynox --no-sandbox script.py`: embedded shared libpython, transparent optimizations, no supervisor",
+    "pynox": "`pynox script.py`: the default; supervised sandboxed worker, Landlock and seccomp, output passed through",
+    "json": "`pynox --json script.py`: as above with captured output and a JSON result",
+    "pool": "`pynox pool --workers=1`: request/response latency of a forked child from a warm template, measured by the client"
+  },
+  "platform": "Linux-6.18.48-109.150.amzn2023.aarch64-aarch64-with-glibc2.34",
+  "affinity": [
+    0,
+    1
+  ],
+  "method": "Seven shuffled rounds, one discarded warmup; warm filesystem; no fsync",
+  "p95_method": "Nearest rank; with seven observations p95 is the maximum",
+  "memory": "Not measured in this run; see historical research for prior observations",
+  "input_bytes": {
+    "json_32": 3884,
+    "json_32768": 4081964
+  },
+  "sources": {
+    "scripts/benchmark.py": "c90529e3c9537a64d1bfecdc20e08f6c27b624944a26452b80c50660c6c17896",
+    "target/release/pynox": "4f622eb61c0671e903db78e44d238dfa08f11e05e76789a540613ac32a416c66",
+    "src/capture.rs": "7bada41873ab48496f9ac73f45911861a7078be629599a4a97e6ea7a30334d2c",
+    "src/config.rs": "ee09fb3aa299a4a39efbdbf7c784e1cd7b256c70e98dac31a125e2466c8e5139",
+    "src/forkserver.rs": "0bcf1035ce32138601dd6f8d4a3f28222be8f284a0d3ee8f7c37516d001baf90",
+    "src/main.rs": "fb9d23cf36b4869f717639f325605946e276774b6d5ea13736039f8435222990",
+    "src/native_json.rs": "35eea8b3489b5cab7d86e6f96bcaeb31f1aa75a8b4a85c73faa0971e198a5639",
+    "src/policy.rs": "93af732451fcfd81661c057b73bd60f5cd2e7eb19ed5701d403e5776917d5a69",
+    "src/pool.rs": "6de66d44b5754766e7628fbfdebefe03da85748f4ae0a4a1c6033c2e13ee00d4",
+    "src/preload.rs": "e7b3e8be927b2d14b552523249332b0a2f95b3f873bc6bcbf1f7d014265f2388",
+    "src/runner.rs": "5c23bf83fa20764935d5362b1c4274baaf695875fcdcd55b9e7897e799068438",
+    "src/runtime.rs": "b60fd44464995f87298f49b7f67d9aa08ace6946187dc60c2f747af7146f1167",
+    "src/sandbox.rs": "bfbb7f385fbe91ec8a6eee12c3aa902cb0c0e9861ad38dafb074e9b5cd4a0d4c",
+    "src/session.rs": "2eec711764847077c0604129573643c0f573a7701c53f482ffd58d5d200437e5",
+    "src/worker.rs": "60012556847615da7a10ad4aba60e58a2e43c8c05599e40b504337a130913e1e",
+    "python/pynox/__init__.py": "3717c6f5ffe4f85df356a728edf6a84e8596595d3d60d6578338865a4698ba6c",
+    "python/pynox/_binary.py": "3565865882e30a7863ff6f58aa6d0170a2dd1bc9cf6915a99a9cfaca401eeeae",
+    "python/pynox/_cli.py": "b57cdb52d94b65348ad9f67e7ed95c44919cbac6e0c2a029aa0973773f163933",
+    "python/pynox/_client.py": "8c9bfa60bb7cb0c9c4a06a868b0e23f4562674ccdb2247e3c2b0be9dc2d58595",
+    "python/pynox/_embedded/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python/pynox/_embedded/bootstrap.py": "6caf44036dfb43a01830a9a300a23a5b697de4b2f5a2bf4b1bc3f7e75cc268a6",
+    "python/pynox/_embedded/json_runtime.py": "ac1443631dc47d58f6cb11e6f7be707cc07acee0aa37f5541455ba2d494f83ed",
+    "python/pynox/_embedded/optimizations.py": "1129a78caeaa42e86073c54a715f15993d07ca4d6b7ec86bd1307d1fd4692d71",
+    "python/pynox/_tool.py": "ac56557f3ce3648bd31424d952d3b1a401924f0a4edec6348d353e684edc3001"
+  },
+  "cases": [
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "round": 0,
+      "milliseconds": 7.641936
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "round": 0,
+      "milliseconds": 11.055791
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "round": 0,
+      "milliseconds": 8.06228
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "round": 0,
+      "milliseconds": 10.984742
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "round": 0,
+      "milliseconds": 4.826942
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "round": 1,
+      "milliseconds": 4.585466
+    },
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "round": 1,
+      "milliseconds": 7.768596
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "round": 1,
+      "milliseconds": 10.967874
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "round": 1,
+      "milliseconds": 8.11519
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "round": 1,
+      "milliseconds": 11.040403
+    },
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "round": 2,
+      "milliseconds": 7.86567
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "round": 2,
+      "milliseconds": 4.921578
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "round": 2,
+      "milliseconds": 10.971072
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "round": 2,
+      "milliseconds": 8.209589
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "round": 2,
+      "milliseconds": 11.03329
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "round": 3,
+      "milliseconds": 11.090302
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "round": 3,
+      "milliseconds": 4.871713
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "round": 3,
+      "milliseconds": 11.089261
+    },
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "round": 3,
+      "milliseconds": 7.801624
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "round": 3,
+      "milliseconds": 8.043822
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "round": 4,
+      "milliseconds": 4.960053
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "round": 4,
+      "milliseconds": 10.859878
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "round": 4,
+      "milliseconds": 11.127864
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "round": 4,
+      "milliseconds": 8.097627
+    },
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "round": 4,
+      "milliseconds": 7.625629
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "round": 5,
+      "milliseconds": 7.931623
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "round": 5,
+      "milliseconds": 4.959084
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "round": 5,
+      "milliseconds": 10.843075
+    },
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "round": 5,
+      "milliseconds": 7.928374
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "round": 5,
+      "milliseconds": 10.972599
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "round": 6,
+      "milliseconds": 10.800242
+    },
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "round": 6,
+      "milliseconds": 7.721747
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "round": 6,
+      "milliseconds": 5.026842
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "round": 6,
+      "milliseconds": 11.009887
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "round": 6,
+      "milliseconds": 8.364573
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "round": 0,
+      "milliseconds": 20.897162
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "round": 0,
+      "milliseconds": 14.284123
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "round": 0,
+      "milliseconds": 17.9023
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "round": 0,
+      "milliseconds": 16.951635
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "round": 0,
+      "milliseconds": 20.842258
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "round": 1,
+      "milliseconds": 17.820165
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "round": 1,
+      "milliseconds": 20.952413
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "round": 1,
+      "milliseconds": 17.129898
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "round": 1,
+      "milliseconds": 20.747754
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "round": 1,
+      "milliseconds": 14.523838
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "round": 2,
+      "milliseconds": 20.717966
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "round": 2,
+      "milliseconds": 14.419996
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "round": 2,
+      "milliseconds": 20.697157
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "round": 2,
+      "milliseconds": 17.00489
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "round": 2,
+      "milliseconds": 17.782906
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "round": 3,
+      "milliseconds": 17.684019
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "round": 3,
+      "milliseconds": 20.853388
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "round": 3,
+      "milliseconds": 14.426209
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "round": 3,
+      "milliseconds": 20.81863
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "round": 3,
+      "milliseconds": 17.161439
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "round": 4,
+      "milliseconds": 14.58179
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "round": 4,
+      "milliseconds": 16.907531
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "round": 4,
+      "milliseconds": 17.819224
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "round": 4,
+      "milliseconds": 20.626055
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "round": 4,
+      "milliseconds": 20.580869
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "round": 5,
+      "milliseconds": 20.708871
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "round": 5,
+      "milliseconds": 17.633231
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "round": 5,
+      "milliseconds": 20.645734
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "round": 5,
+      "milliseconds": 16.875732
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "round": 5,
+      "milliseconds": 14.450067
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "round": 6,
+      "milliseconds": 16.879463
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "round": 6,
+      "milliseconds": 17.831425
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "round": 6,
+      "milliseconds": 14.391714
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "round": 6,
+      "milliseconds": 20.593592
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "round": 6,
+      "milliseconds": 20.795214
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "round": 0,
+      "milliseconds": 43.070518
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "round": 0,
+      "milliseconds": 37.778459
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "round": 0,
+      "milliseconds": 42.747192
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "round": 0,
+      "milliseconds": 39.677224
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "round": 0,
+      "milliseconds": 41.380858
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "round": 1,
+      "milliseconds": 36.78884
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "round": 1,
+      "milliseconds": 41.104205
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "round": 1,
+      "milliseconds": 39.980584
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "round": 1,
+      "milliseconds": 42.730554
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "round": 1,
+      "milliseconds": 43.510725
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "round": 2,
+      "milliseconds": 40.227626
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "round": 2,
+      "milliseconds": 39.564133
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "round": 2,
+      "milliseconds": 42.71633
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "round": 2,
+      "milliseconds": 42.643685
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "round": 2,
+      "milliseconds": 36.497071
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "round": 3,
+      "milliseconds": 42.60462
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "round": 3,
+      "milliseconds": 40.449375
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "round": 3,
+      "milliseconds": 43.389749
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "round": 3,
+      "milliseconds": 41.913933
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "round": 3,
+      "milliseconds": 36.696896
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "round": 4,
+      "milliseconds": 39.510439
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "round": 4,
+      "milliseconds": 36.717985
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "round": 4,
+      "milliseconds": 41.406087
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "round": 4,
+      "milliseconds": 42.662609
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "round": 4,
+      "milliseconds": 43.205088
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "round": 5,
+      "milliseconds": 43.5275
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "round": 5,
+      "milliseconds": 40.483322
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "round": 5,
+      "milliseconds": 36.585969
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "round": 5,
+      "milliseconds": 43.111403
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "round": 5,
+      "milliseconds": 40.092976
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "round": 6,
+      "milliseconds": 44.923423
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "round": 6,
+      "milliseconds": 40.350997
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "round": 6,
+      "milliseconds": 39.429377
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "round": 6,
+      "milliseconds": 38.341999
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "round": 6,
+      "milliseconds": 43.706339
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "round": 0,
+      "milliseconds": 13.541039
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "round": 0,
+      "milliseconds": 16.900009
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "round": 0,
+      "milliseconds": 16.767624
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "round": 0,
+      "milliseconds": 13.952136
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "round": 0,
+      "milliseconds": 10.786206
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "round": 1,
+      "milliseconds": 13.747508
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "round": 1,
+      "milliseconds": 16.91885
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "round": 1,
+      "milliseconds": 13.464533
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "round": 1,
+      "milliseconds": 10.951638
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "round": 1,
+      "milliseconds": 16.908221
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "round": 2,
+      "milliseconds": 13.701679
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "round": 2,
+      "milliseconds": 13.335133
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "round": 2,
+      "milliseconds": 17.032624
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "round": 2,
+      "milliseconds": 16.864388
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "round": 2,
+      "milliseconds": 10.729266
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "round": 3,
+      "milliseconds": 16.950852
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "round": 3,
+      "milliseconds": 13.724169
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "round": 3,
+      "milliseconds": 16.927935
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "round": 3,
+      "milliseconds": 13.427527
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "round": 3,
+      "milliseconds": 11.010026
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "round": 4,
+      "milliseconds": 16.908807
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "round": 4,
+      "milliseconds": 10.675057
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "round": 4,
+      "milliseconds": 16.863695
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "round": 4,
+      "milliseconds": 13.978124
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "round": 4,
+      "milliseconds": 13.419815
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "round": 5,
+      "milliseconds": 13.254776
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "round": 5,
+      "milliseconds": 17.096755
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "round": 5,
+      "milliseconds": 10.752901
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "round": 5,
+      "milliseconds": 13.88945
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "round": 5,
+      "milliseconds": 16.917258
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "round": 6,
+      "milliseconds": 10.855354
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "round": 6,
+      "milliseconds": 13.885616
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "round": 6,
+      "milliseconds": 17.084713
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "round": 6,
+      "milliseconds": 13.499532
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "round": 6,
+      "milliseconds": 17.047433
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "round": 0,
+      "milliseconds": 75.322603
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "round": 0,
+      "milliseconds": 81.99226
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "round": 0,
+      "milliseconds": 154.415917
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "round": 0,
+      "milliseconds": 78.587712
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "round": 0,
+      "milliseconds": 81.094118
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "round": 1,
+      "milliseconds": 75.002855
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "round": 1,
+      "milliseconds": 81.536604
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "round": 1,
+      "milliseconds": 82.815657
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "round": 1,
+      "milliseconds": 153.516942
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "round": 1,
+      "milliseconds": 78.277996
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "round": 2,
+      "milliseconds": 80.89287
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "round": 2,
+      "milliseconds": 152.224665
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "round": 2,
+      "milliseconds": 77.269516
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "round": 2,
+      "milliseconds": 81.884198
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "round": 2,
+      "milliseconds": 74.706247
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "round": 3,
+      "milliseconds": 74.481639
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "round": 3,
+      "milliseconds": 78.039252
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "round": 3,
+      "milliseconds": 153.933158
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "round": 3,
+      "milliseconds": 81.62307
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "round": 3,
+      "milliseconds": 82.560188
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "round": 4,
+      "milliseconds": 74.678679
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "round": 4,
+      "milliseconds": 80.715357
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "round": 4,
+      "milliseconds": 80.995996
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "round": 4,
+      "milliseconds": 77.809442
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "round": 4,
+      "milliseconds": 153.770636
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "round": 5,
+      "milliseconds": 74.770485
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "round": 5,
+      "milliseconds": 80.746607
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "round": 5,
+      "milliseconds": 82.986417
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "round": 5,
+      "milliseconds": 152.78343
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "round": 5,
+      "milliseconds": 78.084014
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "round": 6,
+      "milliseconds": 80.48674
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "round": 6,
+      "milliseconds": 77.65225
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "round": 6,
+      "milliseconds": 74.860701
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "round": 6,
+      "milliseconds": 152.392656
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "round": 6,
+      "milliseconds": 80.688222
+    }
+  ],
+  "summary": [
+    {
+      "workload": "empty",
+      "mode": "cpython",
+      "p50_ms": 7.768596,
+      "p95_ms": 7.928374,
+      "speedup_vs_cpython": 1.0
+    },
+    {
+      "workload": "empty",
+      "mode": "no_sandbox",
+      "p50_ms": 8.097627,
+      "p95_ms": 8.364573,
+      "speedup_vs_cpython": 0.9593669849203971
+    },
+    {
+      "workload": "empty",
+      "mode": "pynox",
+      "p50_ms": 11.03329,
+      "p95_ms": 11.089261,
+      "speedup_vs_cpython": 0.7041051218630164
+    },
+    {
+      "workload": "empty",
+      "mode": "json",
+      "p50_ms": 10.984742,
+      "p95_ms": 11.127864,
+      "speedup_vs_cpython": 0.707216974235717
+    },
+    {
+      "workload": "empty",
+      "mode": "pool",
+      "p50_ms": 4.921578,
+      "p95_ms": 5.026842,
+      "speedup_vs_cpython": 1.5784766593153658
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "cpython",
+      "p50_ms": 16.951635,
+      "p95_ms": 17.161439,
+      "speedup_vs_cpython": 1.0
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "no_sandbox",
+      "p50_ms": 17.819224,
+      "p95_ms": 17.9023,
+      "speedup_vs_cpython": 0.9513116283851643
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pynox",
+      "p50_ms": 20.717966,
+      "p95_ms": 20.842258,
+      "speedup_vs_cpython": 0.8182094226817439
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "json",
+      "p50_ms": 20.795214,
+      "p95_ms": 20.952413,
+      "speedup_vs_cpython": 0.8151700194092736
+    },
+    {
+      "workload": "python_cpu",
+      "mode": "pool",
+      "p50_ms": 14.426209,
+      "p95_ms": 14.58179,
+      "speedup_vs_cpython": 1.1750581874974915
+    },
+    {
+      "workload": "asyncio",
+      "mode": "cpython",
+      "p50_ms": 39.677224,
+      "p95_ms": 41.913933,
+      "speedup_vs_cpython": 1.0
+    },
+    {
+      "workload": "asyncio",
+      "mode": "no_sandbox",
+      "p50_ms": 40.483322,
+      "p95_ms": 41.406087,
+      "speedup_vs_cpython": 0.9800881459283406
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pynox",
+      "p50_ms": 42.747192,
+      "p95_ms": 43.706339,
+      "speedup_vs_cpython": 0.9281831658088794
+    },
+    {
+      "workload": "asyncio",
+      "mode": "json",
+      "p50_ms": 43.205088,
+      "p95_ms": 44.923423,
+      "speedup_vs_cpython": 0.9183460984965475
+    },
+    {
+      "workload": "asyncio",
+      "mode": "pool",
+      "p50_ms": 36.717985,
+      "p95_ms": 38.341999,
+      "speedup_vs_cpython": 1.0805937199440547
+    },
+    {
+      "workload": "json_32",
+      "mode": "cpython",
+      "p50_ms": 13.427527,
+      "p95_ms": 13.541039,
+      "speedup_vs_cpython": 1.0
+    },
+    {
+      "workload": "json_32",
+      "mode": "no_sandbox",
+      "p50_ms": 13.885616,
+      "p95_ms": 13.978124,
+      "speedup_vs_cpython": 0.9670098179295754
+    },
+    {
+      "workload": "json_32",
+      "mode": "pynox",
+      "p50_ms": 16.917258,
+      "p95_ms": 17.047433,
+      "speedup_vs_cpython": 0.7937176934938274
+    },
+    {
+      "workload": "json_32",
+      "mode": "json",
+      "p50_ms": 16.91885,
+      "p95_ms": 17.096755,
+      "speedup_vs_cpython": 0.7936430076512293
+    },
+    {
+      "workload": "json_32",
+      "mode": "pool",
+      "p50_ms": 10.786206,
+      "p95_ms": 11.010026,
+      "speedup_vs_cpython": 1.2448795248301394
+    },
+    {
+      "workload": "json_32768",
+      "mode": "cpython",
+      "p50_ms": 153.516942,
+      "p95_ms": 154.415917,
+      "speedup_vs_cpython": 1.0
+    },
+    {
+      "workload": "json_32768",
+      "mode": "no_sandbox",
+      "p50_ms": 78.039252,
+      "p95_ms": 78.587712,
+      "speedup_vs_cpython": 1.9671759795954988
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pynox",
+      "p50_ms": 81.536604,
+      "p95_ms": 82.986417,
+      "speedup_vs_cpython": 1.8827978413228985
+    },
+    {
+      "workload": "json_32768",
+      "mode": "json",
+      "p50_ms": 81.094118,
+      "p95_ms": 82.815657,
+      "speedup_vs_cpython": 1.8930712336004445
+    },
+    {
+      "workload": "json_32768",
+      "mode": "pool",
+      "p50_ms": 74.770485,
+      "p95_ms": 75.322603,
+      "speedup_vs_cpython": 2.0531756882411556
+    }
+  ]
+}

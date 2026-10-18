@@ -101,154 +101,245 @@ fn filesystem(policy: &Policy, python: &PythonInfo) -> Result<()> {
     Ok(())
 }
 
-fn install(rules: BTreeMap<i64, Vec<SeccompRule>>, action: SeccompAction) -> Result<()> {
-    let program: BpfProgram = SeccompFilter::new(
-        rules,
-        SeccompAction::Allow,
-        action,
-        std::env::consts::ARCH.try_into()?,
-    )?
-    .try_into()?;
-    seccompiler::apply_filter(&program)?;
-    Ok(())
+// Adapted from Moby's default seccomp profile, v28.0.4 (Apache-2.0):
+// https://github.com/moby/moby/blob/6430e49a55babd9b8f4d08e70ecb2b68900770fe/profiles/seccomp/default.json
+// Keep only native x86_64/aarch64 runtime operations. Unlike a container, this
+// worker has no private namespaces: omit process creation, host IPC, metadata
+// mutation, capability/identity changes and privileged kernel interfaces.
+// Landlock still mediates every allowed filesystem operation. New syscalls must
+// be reviewed and explicitly added; a kernel upgrade cannot widen this policy.
+fn allowed_syscalls() -> BTreeMap<i64, Vec<SeccompRule>> {
+    let allowed = [
+        // Buffered/file-descriptor I/O, imports, SQLite and extension loading.
+        libc::SYS_read,
+        libc::SYS_write,
+        libc::SYS_readv,
+        libc::SYS_writev,
+        libc::SYS_pread64,
+        libc::SYS_pwrite64,
+        libc::SYS_preadv,
+        libc::SYS_pwritev,
+        libc::SYS_preadv2,
+        libc::SYS_pwritev2,
+        libc::SYS_close,
+        libc::SYS_close_range,
+        libc::SYS_lseek,
+        libc::SYS_dup,
+        libc::SYS_dup3,
+        libc::SYS_fcntl,
+        libc::SYS_flock,
+        libc::SYS_ioctl,
+        libc::SYS_pipe2,
+        libc::SYS_sendfile,
+        libc::SYS_copy_file_range,
+        libc::SYS_readahead,
+        libc::SYS_fadvise64,
+        libc::SYS_fallocate,
+        libc::SYS_fsync,
+        libc::SYS_fdatasync,
+        libc::SYS_sync_file_range,
+        libc::SYS_ftruncate,
+        libc::SYS_truncate,
+        libc::SYS_openat,
+        libc::SYS_openat2,
+        libc::SYS_newfstatat,
+        libc::SYS_statx,
+        libc::SYS_fstat,
+        libc::SYS_fstatfs,
+        libc::SYS_statfs,
+        libc::SYS_faccessat,
+        libc::SYS_faccessat2,
+        libc::SYS_getdents64,
+        libc::SYS_getcwd,
+        libc::SYS_chdir,
+        libc::SYS_fchdir,
+        libc::SYS_readlinkat,
+        libc::SYS_mkdirat,
+        libc::SYS_unlinkat,
+        libc::SYS_renameat,
+        libc::SYS_renameat2,
+        libc::SYS_getxattr,
+        libc::SYS_lgetxattr,
+        libc::SYS_fgetxattr,
+        libc::SYS_listxattr,
+        libc::SYS_llistxattr,
+        libc::SYS_flistxattr,
+        // Allocators, dynamic libraries and libc thread bookkeeping.
+        libc::SYS_brk,
+        libc::SYS_mmap,
+        libc::SYS_mprotect,
+        libc::SYS_munmap,
+        libc::SYS_mremap,
+        libc::SYS_madvise,
+        libc::SYS_mincore,
+        libc::SYS_msync,
+        libc::SYS_membarrier,
+        libc::SYS_futex,
+        libc::SYS_futex_waitv,
+        libc::SYS_set_robust_list,
+        libc::SYS_set_tid_address,
+        libc::SYS_rseq,
+        libc::SYS_sched_yield,
+        libc::SYS_sched_getaffinity,
+        libc::SYS_sched_getparam,
+        libc::SYS_sched_getscheduler,
+        libc::SYS_sched_get_priority_max,
+        libc::SYS_sched_get_priority_min,
+        // Signal handling is needed by Python and pthreads; sending signals to
+        // other processes (including kill/tgkill) is deliberately absent.
+        libc::SYS_rt_sigaction,
+        libc::SYS_rt_sigprocmask,
+        libc::SYS_rt_sigreturn,
+        libc::SYS_rt_sigpending,
+        libc::SYS_rt_sigtimedwait,
+        libc::SYS_rt_sigsuspend,
+        libc::SYS_sigaltstack,
+        libc::SYS_restart_syscall,
+        libc::SYS_exit,
+        libc::SYS_exit_group,
+        // Clocks, randomness and read-only runtime/process information.
+        libc::SYS_clock_gettime,
+        libc::SYS_clock_getres,
+        libc::SYS_clock_nanosleep,
+        libc::SYS_nanosleep,
+        libc::SYS_gettimeofday,
+        libc::SYS_times,
+        libc::SYS_getitimer,
+        libc::SYS_setitimer,
+        libc::SYS_getrandom,
+        libc::SYS_getcpu,
+        libc::SYS_getpid,
+        libc::SYS_getppid,
+        libc::SYS_gettid,
+        libc::SYS_getuid,
+        libc::SYS_geteuid,
+        libc::SYS_getgid,
+        libc::SYS_getegid,
+        libc::SYS_getgroups,
+        libc::SYS_getresuid,
+        libc::SYS_getresgid,
+        libc::SYS_getpgid,
+        libc::SYS_getsid,
+        libc::SYS_getrlimit,
+        libc::SYS_getrusage,
+        libc::SYS_uname,
+        libc::SYS_sysinfo,
+        libc::SYS_umask,
+        // Event loops and existing descriptors, including asyncio's unnamed
+        // stream socketpair. Socket creation/connection is granted below.
+        libc::SYS_epoll_create1,
+        libc::SYS_epoll_ctl,
+        libc::SYS_epoll_pwait,
+        libc::SYS_epoll_pwait2,
+        libc::SYS_ppoll,
+        libc::SYS_pselect6,
+        libc::SYS_eventfd2,
+        libc::SYS_timerfd_create,
+        libc::SYS_timerfd_gettime,
+        libc::SYS_timerfd_settime,
+        libc::SYS_signalfd4,
+        libc::SYS_sendto,
+        libc::SYS_recvfrom,
+        libc::SYS_sendmsg,
+        libc::SYS_recvmsg,
+        libc::SYS_sendmmsg,
+        libc::SYS_recvmmsg,
+        libc::SYS_getsockopt,
+        libc::SYS_setsockopt,
+        libc::SYS_getsockname,
+        libc::SYS_getpeername,
+        libc::SYS_shutdown,
+        // The earlier compatibility filter always returns ENOSYS for clone3.
+        // Allow here only so this layer does not replace ENOSYS with EPERM.
+        libc::SYS_clone3,
+    ];
+    #[allow(unused_mut)]
+    let mut rules: BTreeMap<_, _> = allowed.into_iter().map(|nr| (nr, vec![])).collect();
+    // x86_64 libc also uses these legacy entry points; aarch64 only has the
+    // corresponding *at, *1/*2 and pselect/ppoll interfaces above.
+    #[cfg(target_arch = "x86_64")]
+    for nr in [
+        libc::SYS_access,
+        libc::SYS_open,
+        libc::SYS_stat,
+        libc::SYS_lstat,
+        libc::SYS_poll,
+        libc::SYS_select,
+        libc::SYS_pipe,
+        libc::SYS_dup2,
+        libc::SYS_creat,
+        libc::SYS_readlink,
+        libc::SYS_mkdir,
+        libc::SYS_rmdir,
+        libc::SYS_unlink,
+        libc::SYS_rename,
+        libc::SYS_getdents,
+        libc::SYS_epoll_create,
+        libc::SYS_epoll_wait,
+        libc::SYS_eventfd,
+        libc::SYS_signalfd,
+        libc::SYS_time,
+        libc::SYS_arch_prctl,
+    ] {
+        rules.insert(nr, vec![]);
+    }
+    rules
 }
 
-fn syscalls(allow_network: bool) -> Result<()> {
-    let denied = [
-        // New executables, process inspection, and cross-process signals.
-        libc::SYS_execve,
-        libc::SYS_execveat,
-        libc::SYS_ptrace,
-        libc::SYS_process_vm_readv,
-        libc::SYS_process_vm_writev,
-        libc::SYS_pidfd_getfd,
-        libc::SYS_pidfd_open,
-        libc::SYS_pidfd_send_signal,
-        libc::SYS_kill,
-        libc::SYS_tkill,
-        libc::SYS_tgkill,
-        libc::SYS_rt_sigqueueinfo,
-        libc::SYS_rt_tgsigqueueinfo,
-        libc::SYS_setrlimit,
-        // Alternate I/O paths and namespace / kernel management.
-        libc::SYS_io_uring_setup,
-        libc::SYS_io_uring_enter,
-        libc::SYS_io_uring_register,
-        libc::SYS_open_by_handle_at,
-        libc::SYS_name_to_handle_at,
-        libc::SYS_mount,
-        libc::SYS_umount2,
-        libc::SYS_pivot_root,
-        libc::SYS_chroot,
-        libc::SYS_unshare,
-        libc::SYS_setns,
-        libc::SYS_fsopen,
-        libc::SYS_fsconfig,
-        libc::SYS_fsmount,
-        libc::SYS_move_mount,
-        libc::SYS_open_tree,
-        libc::SYS_mount_setattr,
-        libc::SYS_bpf,
-        libc::SYS_perf_event_open,
-        libc::SYS_userfaultfd,
-        libc::SYS_keyctl,
-        libc::SYS_add_key,
-        libc::SYS_request_key,
-        libc::SYS_init_module,
-        libc::SYS_finit_module,
-        libc::SYS_delete_module,
-        libc::SYS_reboot,
-        libc::SYS_swapon,
-        libc::SYS_swapoff,
-        libc::SYS_sethostname,
-        libc::SYS_setdomainname,
-        libc::SYS_acct,
-        // Landlock ABI 3 does not mediate these metadata mutations.
-        libc::SYS_fchmod,
-        libc::SYS_fchmodat,
-        // __NR_fchmodat2 = 452 on both supported architectures.
-        452,
-        libc::SYS_fchown,
-        libc::SYS_fchownat,
-        libc::SYS_utimensat,
-        libc::SYS_setxattr,
-        libc::SYS_lsetxattr,
-        libc::SYS_fsetxattr,
-        libc::SYS_removexattr,
-        libc::SYS_lremovexattr,
-        libc::SYS_fremovexattr,
-        // IPC can mutate state belonging to another process.
-        libc::SYS_shmget,
-        libc::SYS_shmat,
-        libc::SYS_shmctl,
-        libc::SYS_semget,
-        libc::SYS_semop,
-        libc::SYS_semtimedop,
-        libc::SYS_semctl,
-        libc::SYS_msgget,
-        libc::SYS_msgsnd,
-        libc::SYS_msgrcv,
-        libc::SYS_msgctl,
-        libc::SYS_mq_open,
-        libc::SYS_mq_unlink,
-        libc::SYS_mq_timedsend,
-        libc::SYS_mq_timedreceive,
-        libc::SYS_mq_notify,
-        libc::SYS_mq_getsetattr,
-    ];
-    let mut rules: BTreeMap<_, _> = denied.into_iter().map(|nr| (nr, vec![])).collect();
-    // asyncio uses an unnamed AF_UNIX stream socketpair for its wakeup channel.
-    // Datagram pairs can be reconnected to host sockets, so permit only streams.
+fn compile_filter(
+    rules: BTreeMap<i64, Vec<SeccompRule>>,
+    default: SeccompAction,
+    matched: SeccompAction,
+) -> Result<BpfProgram> {
+    Ok(
+        SeccompFilter::new(rules, default, matched, std::env::consts::ARCH.try_into()?)?
+            .try_into()?,
+    )
+}
+
+// Build without applying: unit tests evaluate the actual BPF and its stacked
+// actions without restricting the test runner. Production installs every layer
+// before initializing CPython or running any task code.
+fn syscall_filters(allow_network: bool) -> Result<Vec<BpfProgram>> {
+    let mut rules = allowed_syscalls();
     rules.insert(
         libc::SYS_socketpair,
-        vec![
-            SeccompRule::new(vec![SeccompCondition::new(
-                0,
-                SeccompCmpArgLen::Dword,
-                SeccompCmpOp::Ne,
-                libc::AF_UNIX as u64,
-            )?])?,
-            SeccompRule::new(
-                [
-                    libc::SOCK_STREAM,
-                    libc::SOCK_STREAM | libc::SOCK_CLOEXEC,
-                    libc::SOCK_STREAM | libc::SOCK_NONBLOCK,
-                    libc::SOCK_STREAM | libc::SOCK_CLOEXEC | libc::SOCK_NONBLOCK,
-                ]
-                .into_iter()
-                .map(|value| {
-                    SeccompCondition::new(
-                        1,
-                        SeccompCmpArgLen::Dword,
-                        SeccompCmpOp::Ne,
-                        value as u64,
-                    )
-                })
-                .collect::<std::result::Result<Vec<_>, _>>()?,
-            )?,
-        ],
+        [
+            libc::SOCK_STREAM,
+            libc::SOCK_STREAM | libc::SOCK_CLOEXEC,
+            libc::SOCK_STREAM | libc::SOCK_NONBLOCK,
+            libc::SOCK_STREAM | libc::SOCK_CLOEXEC | libc::SOCK_NONBLOCK,
+        ]
+        .into_iter()
+        .map(|kind| {
+            SeccompRule::new(vec![
+                SeccompCondition::new(
+                    0,
+                    SeccompCmpArgLen::Dword,
+                    SeccompCmpOp::Eq,
+                    libc::AF_UNIX as u64,
+                )?,
+                SeccompCondition::new(1, SeccompCmpArgLen::Dword, SeccompCmpOp::Eq, kind as u64)?,
+            ])
+        })
+        .collect::<std::result::Result<_, _>>()?,
     );
     if allow_network {
         rules.insert(
             libc::SYS_socket,
-            vec![SeccompRule::new(vec![
-                SeccompCondition::new(
-                    0,
-                    SeccompCmpArgLen::Dword,
-                    SeccompCmpOp::Ne,
-                    libc::AF_INET as u64,
-                )?,
-                SeccompCondition::new(
-                    0,
-                    SeccompCmpArgLen::Dword,
-                    SeccompCmpOp::Ne,
-                    libc::AF_INET6 as u64,
-                )?,
-            ])?],
+            [libc::AF_INET, libc::AF_INET6]
+                .into_iter()
+                .map(|family| {
+                    SeccompRule::new(vec![SeccompCondition::new(
+                        0,
+                        SeccompCmpArgLen::Dword,
+                        SeccompCmpOp::Eq,
+                        family as u64,
+                    )?])
+                })
+                .collect::<std::result::Result<_, _>>()?,
         );
-    } else {
         for nr in [
-            libc::SYS_socket,
             libc::SYS_connect,
             libc::SYS_bind,
             libc::SYS_listen,
@@ -258,55 +349,61 @@ fn syscalls(allow_network: bool) -> Result<()> {
             rules.insert(nr, vec![]);
         }
     }
-    #[cfg(target_arch = "x86_64")]
-    for nr in [
-        libc::SYS_fork,
-        libc::SYS_vfork,
-        libc::SYS_chmod,
-        libc::SYS_chown,
-        libc::SYS_lchown,
-        libc::SYS_utime,
-        libc::SYS_utimes,
-        libc::SYS_futimesat,
-    ] {
-        rules.insert(nr, vec![]);
-    }
-    // Native libraries can create threads, but clone cannot create a process.
+    // Preserve the existing thread-only clone contract on both native ABIs.
     rules.insert(
         libc::SYS_clone,
         vec![SeccompRule::new(vec![SeccompCondition::new(
             0,
             SeccompCmpArgLen::Qword,
             SeccompCmpOp::MaskedEq(libc::CLONE_THREAD as u64),
-            0,
+            libc::CLONE_THREAD as u64,
         )?])?],
     );
-    // Querying our own limits is useful to native libraries; changing limits or
-    // inspecting another process is denied.
+    // Native libraries may query their own limits, but never change them or
+    // query another process. Arguments are pid_t (32 bits) and a pointer (64).
     rules.insert(
         libc::SYS_prlimit64,
-        vec![
+        vec![SeccompRule::new(vec![
+            SeccompCondition::new(0, SeccompCmpArgLen::Dword, SeccompCmpOp::Eq, 0)?,
+            SeccompCondition::new(2, SeccompCmpArgLen::Qword, SeccompCmpOp::Eq, 0)?,
+        ])?],
+    );
+    // Python 3.14+ sets native thread names through pthread_setname_np/prctl.
+    // No unrestricted prctl or seccomp permission is needed after installation.
+    rules.insert(
+        libc::SYS_prctl,
+        [
+            libc::PR_SET_NAME,
+            libc::PR_GET_NAME,
+            libc::PR_GET_DUMPABLE,
+            libc::PR_GET_SECCOMP,
+            libc::PR_GET_NO_NEW_PRIVS,
+        ]
+        .into_iter()
+        .map(|option| {
             SeccompRule::new(vec![SeccompCondition::new(
                 0,
                 SeccompCmpArgLen::Dword,
-                SeccompCmpOp::Ne,
-                0,
-            )?])?,
-            SeccompRule::new(vec![SeccompCondition::new(
-                2,
-                SeccompCmpArgLen::Qword,
-                SeccompCmpOp::Ne,
-                0,
-            )?])?,
-        ],
+                SeccompCmpOp::Eq,
+                option as u64,
+            )?])
+        })
+        .collect::<std::result::Result<_, _>>()?,
     );
-    install(rules, SeccompAction::Errno(libc::EPERM as u32))?;
+    // Like Moby, keep clone3 unavailable so glibc can fall back to clone.
+    // Install this compatibility layer first; the final allowlist denies
+    // further seccomp/prctl filter installation in the worker.
+    let mut filters = vec![compile_filter(
+        [(libc::SYS_clone3, vec![])].into_iter().collect(),
+        SeccompAction::Allow,
+        SeccompAction::Errno(libc::ENOSYS as u32),
+    )?];
     #[cfg(target_arch = "x86_64")]
     {
-        // x32 shares AUDIT_ARCH_X86_64 but has different syscall numbers.
-        // Reject the entire alternate ABI, including future syscalls.
+        // Preserve the existing x32 ABI rejection contract (SignalError).
+        // This is ABI validation, not the default for unknown native syscalls.
         use seccompiler::sock_filter;
-        seccompiler::apply_filter(&[
+        filters.push(vec![
             sock_filter {
                 code: 0x20,
                 jt: 0,
@@ -331,12 +428,23 @@ fn syscalls(allow_network: bool) -> Result<()> {
                 jf: 0,
                 k: libc::SECCOMP_RET_ALLOW,
             },
-        ])?;
+        ]);
     }
-    // libc falls back to clone() when clone3 is unavailable. Its pointed-to
-    // arguments cannot be safely inspected by a classic seccomp BPF filter.
-    install(
-        [(libc::SYS_clone3, vec![])].into_iter().collect(),
-        SeccompAction::Errno(libc::ENOSYS as u32),
-    )
+    filters.push(compile_filter(
+        rules,
+        SeccompAction::Errno(libc::EPERM as u32),
+        SeccompAction::Allow,
+    )?);
+    Ok(filters)
 }
+
+fn syscalls(allow_network: bool) -> Result<()> {
+    for program in syscall_filters(allow_network)? {
+        seccompiler::apply_filter(&program)?;
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+#[path = "../tests/rust/sandbox.rs"]
+mod tests;

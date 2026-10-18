@@ -13,6 +13,10 @@
   environment grants, wall timeout and address-space limits per task. The
   script's directory is the only implicit read grant.
 - Support asyncio's internal wakeup socketpair and opt-in IPv4/IPv6.
+- Replace the seccomp denylist with an explicit allowlist adapted from Moby
+  v28.0.4. Unknown native syscalls return `EPERM`; retain thread-only `clone`,
+  the `clone3` `ENOSYS` fallback and fatal x32 ABI rejection. Validate generated
+  BPF without applying it to the Rust test runner.
 - Retain a JSONL pool with clean templates and disposable per-task children;
   accept inline `code` with an optional `name` instead of a script file.
 - Add persistent sessions to the pool: `"session": NAME` keeps one isolated

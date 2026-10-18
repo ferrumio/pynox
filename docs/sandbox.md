@@ -6,10 +6,37 @@ sandbox setup failure never falls back to unrestricted execution. The backend
 supports Linux glibc and musl and needs Landlock ABI >= 3 (kernel 6.2 or newer).
 See [deploy](deploy.md) for what containers and AWS Lambda allow, measured.
 
-Linux Landlock ABI >= 3 mediates reads, writes and truncation. Seccomp denies
-new processes/executables, host IPC, cross-process inspection/signals, metadata
-mutations and alternate kernel interfaces. Enforcement covers native calls,
-including calls made through ctypes, not just Python wrappers.
+Linux Landlock ABI >= 3 mediates reads, writes and truncation. Seccomp uses an
+explicit syscall allowlist: unlisted native calls and disallowed arguments
+return `EPERM`, rather than terminating the process. New processes/executables,
+host IPC, cross-process inspection/signals, metadata mutations and alternate
+kernel interfaces remain denied. Enforcement covers native calls, including
+calls made through ctypes, not just Python wrappers.
+
+## Syscall policy
+
+The allowlist is adapted from the
+[Moby v28.0.4 default profile](https://github.com/moby/moby/blob/6430e49a55babd9b8f4d08e70ecb2b68900770fe/profiles/seccomp/default.json),
+pinned to commit `6430e49a55babd9b8f4d08e70ecb2b68900770fe`.
+It retains the file, memory, clock, signal handling, thread and event-loop
+operations needed by the runtime. Docker permissions that depend on container
+isolation are not imported. Both native architectures and both libc variants
+use the same policy, with explicit x86_64 legacy syscall entries.
+
+- `clone` requires `CLONE_THREAD`. `clone3` returns **`ENOSYS`** so glibc can
+  use `clone`; its pointer arguments cannot be inspected by classic seccomp BPF.
+- `prlimit64` can query the current process with no new limit pointer. Changing
+  limits or querying other processes remains denied.
+- `prctl` permits thread naming and selected read-only queries. Installing
+  another seccomp filter is not granted after the policy is installed.
+- **ABI validation remains fatal:** incompatible audit architectures and x32
+  retain the existing rejection behavior. Unknown native syscalls use `EPERM`.
+
+The complete list and argument rules live in `src/sandbox.rs`. A kernel update
+does not automatically grant new syscalls. New runtime/library requirements
+need a reviewed addition and validation on glibc/musl, x86_64/aarch64 and
+CPython 3.11–3.15. Python normally surfaces a denied operation as an exception;
+native libraries may handle errno differently.
 
 ## Granted capabilities
 
