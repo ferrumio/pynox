@@ -145,8 +145,8 @@ examples, tested in CI, with transcripts from real runs.
 
 Any framework that accepts a typed, documented Python function accepts
 `pynox.tool()`. The snippets show the shape; `examples/agent_tool.py` and
-`examples/monty_bridge.py` run in Pynox's test suite, the framework lines do
-not yet.
+`examples/monty_bridge.py` run in Pynox's test suite, and the Pydantic AI and
+Strands lines run there too, against scripted models.
 
 === "Pydantic AI"
     ```python
