@@ -1,11 +1,14 @@
 """The real-agent examples, driven by scripted models so CI needs no API key or network.
 
 Pydantic AI's FunctionModel plays the model's part with fixed tool calls; Strands
-tools are invoked directly. Everything else is real: the framework, the tool
-schema it builds from pynox.tool(), the pool, the sandbox and the host functions.
+gets a scripted ``Model`` provider that emits the same stream events BedrockModel
+would. Everything else is real: the framework, the agent loop, the tool schema it
+builds from pynox.tool(), the pool, the sandbox and the host functions.
 """
 
+import asyncio
 import importlib.util
+import json
 import os
 import sys
 import tempfile
@@ -131,6 +134,74 @@ class CoderTests(unittest.TestCase):
             self.assertIn("*", (repo / "invoice.py").read_text())
 
 
+def scripted_strands(steps):
+    """A Strands ``Model`` that replays fixed events, so the agent loop runs with no model.
+
+    ``steps`` is a list of event lists, consumed one per ``stream()`` call. This
+    drives the real event loop: Strands parses the tool spec from
+    ``pynox.tool()``, runs the tool, and feeds the result back as a
+    ``toolResult`` content block for the next step to see.
+    """
+
+    from strands.models import Model
+
+    def tool_use(tool_id, name, arguments):
+        return [
+            {"messageStart": {"role": "assistant"}},
+            {"contentBlockStart": {"start": {"toolUse": {"toolUseId": tool_id, "name": name}}}},
+            {"contentBlockDelta": {"delta": {"toolUse": {"input": json.dumps(arguments)}}}},
+            {"contentBlockStop": {}},
+            {"messageStop": {"stopReason": "tool_use"}},
+            {"metadata": _usage()},
+        ]
+
+    def say(text):
+        return [
+            {"messageStart": {"role": "assistant"}},
+            {"contentBlockStart": {"start": {}}},
+            {"contentBlockDelta": {"delta": {"text": text}}},
+            {"contentBlockStop": {}},
+            {"messageStop": {"stopReason": "end_turn"}},
+            {"metadata": _usage()},
+        ]
+
+    class ScriptedModel(Model):
+        def __init__(self):
+            self.pending = list(steps)
+            self.specs = []
+            self.tool_results = []
+
+        def update_config(self, **model_config):
+            pass
+
+        def get_config(self):
+            return {}
+
+        async def stream(self, messages, tool_specs=None, system_prompt=None, **kwargs):
+            self.specs = tool_specs or []
+            for message in messages:
+                for block in message.get("content", []):
+                    if "toolResult" in block:
+                        self.tool_results.append(block["toolResult"])
+            for event in self.pending.pop(0):
+                yield event
+
+        async def structured_output(self, output_model, prompt, system_prompt=None, **kwargs):
+            raise NotImplementedError("the scripted provider only replays events")
+
+    model = ScriptedModel()
+    model.tool_use = tool_use
+    model.say = say
+    return model
+
+
+def _usage():
+    return {
+        "usage": {"inputTokens": 1, "outputTokens": 1, "totalTokens": 2},
+        "metrics": {"latencyMs": 0},
+    }
+
+
 @unittest.skipUnless(HAS_STRANDS, "uv sync --group agents")
 class SupportTests(unittest.TestCase):
     def test_strands_tool_spec_and_host_functions_under_store_rules(self):
@@ -171,3 +242,45 @@ class SupportTests(unittest.TestCase):
                 "unable to open database file",
                 "".join(c.get("text", "") for c in bypass["content"]),
             )
+
+    def test_strands_agent_loop_runs_the_tool_and_feeds_the_result_back(self):
+        """The full loop with a scripted model: no network, no Bedrock, real tool."""
+        from agents import support
+        from agents.common import make_orders
+
+        code = (
+            "from pynox_host import find_orders, issue_refund, HostError\n"
+            "for order in find_orders('ana@example.com'):\n"
+            "    if order['status'] == 'damaged':\n"
+            "        try:\n"
+            "            print(issue_refund(order['id'], order['total']))\n"
+            "        except HostError as error:\n"
+            "            print(error)\n"
+        )
+        model = scripted_strands([])
+        model.pending = [
+            model.tool_use("call-1", "run_python", {"code": code}),
+            model.say("I refunded the damaged orders."),
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            store = support.Store(make_orders(Path(temporary)))
+            agent = support.build_agent(store, model)
+
+            result = asyncio.run(agent.invoke_async("Ana needs help with a delivery."))
+
+            self.assertIn("refunded", str(result))
+            # Strands built the spec from pynox.tool(), host functions included.
+            self.assertEqual([spec["name"] for spec in model.specs], ["run_python"])
+            self.assertIn(
+                "find_orders(customer: str) -> list[dict]",
+                model.specs[0]["description"],
+            )
+            # The tool really ran in the pool and its output came back to the model.
+            self.assertEqual(len(model.tool_results), 1, model.tool_results)
+            result_block = model.tool_results[0]
+            self.assertEqual(result_block["status"], "success", result_block)
+            text = "".join(block.get("text", "") for block in result_block["content"])
+            self.assertIn("refunded 24.90 for A-102", text)
+            self.assertIn("ticket opened for A-101", text)
+            self.assertEqual(store.refunds, [("A-102", 24.9)])
+            self.assertEqual(store.tickets, ["A-101"])
