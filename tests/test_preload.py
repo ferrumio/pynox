@@ -71,6 +71,25 @@ class PreloadedRuntimeTests(pool_tests.PoolRuntimeTests):
         result = self.run_code("import cached_package; print(cached_package.VALUES)")
         self.assertEqual(result["stdout"], "[]\n", result)
 
+    def test_preload_output_is_not_inherited_by_jobs(self):
+        self.close_pool()
+        (self.root / "trusted/cached_package.py").write_text(
+            "import os, sys\n"
+            "print('template stdout', end='')\n"
+            "print('template stderr', end='', file=sys.stderr)\n"
+            "def pending(text):\n"
+            "    print(text, end='')\n"
+            "    print(text, end='', file=sys.stderr)\n"
+            "os.register_at_fork(before=lambda: pending('before fork'))\n"
+            "os.register_at_fork(after_in_parent=lambda: pending('in parent'))\n"
+        )
+        self.start_pool()
+        for _ in range(2):
+            result = self.run_code("print('only the job')")
+            self.assertEqual(result["exit"], 0, result)
+            self.assertEqual(result["stdout"], "only the job\n")
+            self.assertEqual(result["stderr"], "")
+
     def startup_failure(self, source, expected):
         modules = self.root / "invalid"
         modules.mkdir(exist_ok=True)

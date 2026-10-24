@@ -2,10 +2,13 @@
 
 import json
 import os
+import pty
+import select
 import socket
 import subprocess
 import tempfile
 import textwrap
+import time
 import unittest
 from pathlib import Path
 
@@ -100,6 +103,77 @@ class DefaultModeTests(unittest.TestCase):
     def test_stdin_passes_through(self):
         result = run("-c", "import sys; print(sys.stdin.read().strip().upper())", stdin="hello\n")
         self.assertEqual(result.stdout, "HELLO\n", result.stderr)
+
+    def test_stdout_is_buffered_for_pipes_and_files_stderr_is_line_buffered(self):
+        code = (
+            "import sys\nprint('buffered')\n"
+            "sys.stderr.write('ready\\n')\n"
+            "sys.stdin.readline()\nprint('released', end='')\n"
+        )
+        for destination in ("pipe", "file"):
+            with self.subTest(destination=destination):
+                with (self.root / "stdout.txt").open("w+b") as output_file:
+                    process = subprocess.Popen(
+                        [str(runtime.BINARY), "-c", code],
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE if destination == "pipe" else output_file,
+                        stderr=subprocess.PIPE,
+                    )
+                    try:
+                        self.assertTrue(select.select([process.stderr], [], [], 5)[0])
+                        self.assertEqual(os.read(process.stderr.fileno(), 1024), b"ready\n")
+                        if destination == "pipe":
+                            self.assertFalse(select.select([process.stdout], [], [], 0)[0])
+                        else:
+                            self.assertEqual(os.fstat(output_file.fileno()).st_size, 0)
+                        output, errors = process.communicate(b"\n", timeout=5)
+                        self.assertEqual(process.returncode, 0, errors)
+                        self.assertEqual(errors, b"")
+                        if destination == "file":
+                            output_file.seek(0)
+                            output = output_file.read()
+                        self.assertEqual(output, b"buffered\nreleased")
+                    finally:
+                        if process.poll() is None:
+                            process.kill()
+                        process.communicate(timeout=5)
+
+    def test_terminal_lines_and_input_prompt_are_visible_before_input(self):
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        code = (
+            "import sys\nprint('line ready')\nsys.stdin.readline()\n"
+            "name = input('Name: ')\nprint('Hello ' + name)\n"
+        )
+        process = subprocess.Popen(
+            [str(runtime.BINARY), "-c", code],
+            stdin=slave,
+            stdout=slave,
+            stderr=slave,
+        )
+        os.close(slave)
+        transcript = b""
+
+        def read_until(expected):
+            nonlocal transcript
+            deadline = time.monotonic() + 5
+            while expected not in transcript:
+                remaining = max(0, deadline - time.monotonic())
+                self.assertTrue(select.select([master], [], [], remaining)[0], transcript)
+                transcript += os.read(master, 4096)
+
+        try:
+            read_until(b"line ready\r\n")
+            os.write(master, b"\n")
+            read_until(b"Name: ")
+            os.write(master, b"world\n")
+            read_until(b"Hello world\r\n")
+            process.wait(timeout=5)
+            self.assertEqual(process.returncode, 0, transcript)
+        finally:
+            if process.poll() is None:
+                process.kill()
+            process.communicate(timeout=5)
 
     def test_timeout_and_setup_failures_are_reported_on_stderr(self):
         script = self.write("loop.py", "while True: pass\n")

@@ -31,6 +31,29 @@ def pool_dialog(requests, *args, timeout=60):
 
 
 class SessionProtocolTests(unittest.TestCase):
+    def test_buffered_output_belongs_to_its_step_even_on_error(self):
+        _, reports = pool_dialog(
+            [
+                {
+                    "id": "a",
+                    "session": "s",
+                    "code": "import sys\nprint('first', end='')\n"
+                    "print('diagnostic', end='', file=sys.stderr)\nraise ValueError('oops')",
+                },
+                {"id": "b", "session": "s", "code": "print('second', end='')"},
+                {"id": "c", "session": "s", "code": "pass"},
+                {"id": "d", "session": "s", "close": True},
+            ],
+            "--workers=1",
+        )
+        self.assertEqual(reports["a"]["error"]["type"], "ValueError")
+        self.assertEqual(reports["a"]["stdout"], "first")
+        self.assertEqual(reports["a"]["stderr"], "diagnostic")
+        self.assertEqual(reports["b"]["stdout"], "second")
+        self.assertEqual(reports["b"]["stderr"], "")
+        self.assertEqual(reports["c"]["stdout"], "")
+        self.assertEqual(reports["c"]["stderr"], "")
+
     def test_state_persists_errors_do_not_end_it_and_close_works(self):
         ready, reports = pool_dialog(
             [

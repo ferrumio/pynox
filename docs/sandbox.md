@@ -69,6 +69,20 @@ Captured output is bounded and excess is
 drained, avoiding unbounded supervisor memory. Address space is not physical
 memory accounting or a shared budget across concurrent jobs.
 
+Standard output uses CPython's normal buffering: block buffering for pipes
+and files, line buffering for terminals. Standard error is line-buffered;
+terminal `input()` prompts remain visible before input. Completed tasks,
+including raised exceptions and `sys.exit`, flush both streams before their
+report, as does each session step. Captured output still respects
+`--max-output`.
+
+A timeout or other `SIGKILL` can lose the last unflushed output, just as it
+can with CPython. Use `print(..., flush=True)` or `sys.stdout.flush()` for
+progress that must leave the buffer immediately. This does not turn a
+JSON/pool result into a live output stream; those modes return captured output
+with the task or step result. Sandbox interpreter flags such as `-u` remain
+accepted no-ops; `--no-sandbox -u` retains CPython's unbuffered behavior.
+
 Landlock does not hide all metadata (such as stat results) or virtualize the
 filesystem. Pynox does not create user/PID/network namespaces, a private root,
 cgroups, disk quotas or a transactional workspace. Explicit network access can

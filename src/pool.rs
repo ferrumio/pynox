@@ -461,11 +461,8 @@ fn emit(writer: &Writer, result: &Value) -> Result<()> {
     if result.get("event").is_none() && result.get("exit").is_some() {
         writer.record(result);
     }
-    let mut stdout = writer.stdout.lock().unwrap();
-    serde_json::to_writer(&mut *stdout, result)?;
-    stdout.write_all(b"\n")?;
-    stdout.flush()?;
-    Ok(())
+    let stdout = writer.stdout.lock().unwrap();
+    crate::runner::write_json_line(stdout.lock(), result)
 }
 
 fn failure(id: Value, kind: &str, message: String) -> Value {

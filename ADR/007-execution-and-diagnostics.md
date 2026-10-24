@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted — 2026-10-17. Revised 2026-10-18 with passthrough output.
+Accepted — 2026-10-17. Revised 2026-10-18 with passthrough output and
+2026-10-24 with CPython stdio buffering.
 
 ## Context
 
@@ -19,6 +20,18 @@ followed by `pynox: <hint>` when a permission or memory hint applies; launcher,
 timeout and signal failures print one `pynox:` line. Exit codes are Python's,
 plus 124 for timeout, 125 for launcher or setup failure and 2 for invalid
 Pynox flags.
+
+Standard streams use CPython's default buffering: stdout is block-buffered
+for a pipe or file and line-buffered for a terminal; stderr is line-buffered.
+After a pool fork, buffering follows the child's remapped descriptors.
+Trusted preload output, including before-fork and parent-hook output, is
+flushed to the template's null device before forking, so jobs cannot inherit
+pending output. Both streams are flushed
+before a task or session-step report, including exceptions and `sys.exit`;
+normal interpreter finalization still runs `atexit` handlers.
+The supervisor batches JSON serialization writes through a bounded buffer
+and flushes every response while holding the output lock. JSON bytes and
+pool framing stay unchanged; there is no extra full-result allocation.
 
 `--json` captures both streams, bounded by `--max-output`, and prints one JSON
 result: `exit`, `stdout`, `stderr`, truncation flags, duration, runtime and the
@@ -53,3 +66,10 @@ do not inherit noise on their stderr.
 Passthrough tracebacks omit the launcher's frame but otherwise match Python.
 Partial output before a `RecursionError` differs by that frame. The diagnostic
 channel is written by the task and is not an audit log.
+
+Batching stdout writes removes the syscall-per-print cost for captured and
+redirected output. Terminal lines and `input()` prompts remain immediate.
+A timeout or other `SIGKILL` can discard the last unflushed bytes, just as
+with CPython. Use `print(..., flush=True)` or `stream.flush()` when output
+must leave Python's buffer before termination. Capture limits still apply;
+the JSON/pool result format and one-report-per-step boundary are unchanged.

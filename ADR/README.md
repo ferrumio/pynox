@@ -12,7 +12,7 @@ explicitly marked as future work; an ambition is not an implemented feature.
 | 004 | [Transparent, measured native optimizations](004-native-optimizations.md) | Accepted |
 | 005 | [Explicit pool and disposable task state](005-task-lifecycle.md) | Accepted |
 | 006 | [Pinned, relocatable Linux distribution](006-distribution-and-dependencies.md) | Accepted |
-| 007 | [Execution modes and structured diagnostics](007-execution-and-diagnostics.md) | Accepted; revised 2026-10-18 |
+| 007 | [Execution modes and structured diagnostics](007-execution-and-diagnostics.md) | Accepted; revised 2026-10-24 |
 | 008 | [Validation and GitHub release workflow](008-validation-and-releases.md) | Accepted |
 | 009 | [CPython 3.11–3.15 and pre-alpha maturity](009-python-matrix-and-pre-alpha.md) | Accepted |
 | 010 | [Linux only: glibc and musl](010-linux-platforms.md) | Accepted |

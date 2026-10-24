@@ -2,6 +2,58 @@ use super::*;
 use crate::policy::Grants;
 use std::io::Cursor;
 
+#[test]
+fn json_lines_batch_escaped_output_without_changing_bytes() {
+    #[derive(Default)]
+    struct Output {
+        bytes: Vec<u8>,
+        writes: usize,
+        flushed: bool,
+    }
+    impl Write for Output {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.writes += 1;
+            self.bytes.extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.flushed = true;
+            Ok(())
+        }
+    }
+    let result = json!({
+        "stdout": "a line\n\"quoted\"\\\t\u{0} café 🐍\n".repeat(10000),
+        "stderr": "", "error": null, "exit": 0
+    });
+    let expected = format!("{result}\n");
+    let mut output = Output::default();
+    write_json_line(&mut output, &result).unwrap();
+    assert_eq!(output.bytes, expected.as_bytes());
+    assert!(output.flushed);
+    assert!(
+        output.writes < 1000,
+        "Escapes must not cause separate writes"
+    );
+}
+
+#[test]
+fn json_line_flush_failures_are_reported() {
+    struct BrokenOutput;
+    impl Write for BrokenOutput {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Err(std::io::ErrorKind::BrokenPipe.into())
+        }
+    }
+    let error = write_json_line(BrokenOutput, &json!({"event": "ready"})).unwrap_err();
+    assert_eq!(
+        error.downcast_ref::<std::io::Error>().unwrap().kind(),
+        std::io::ErrorKind::BrokenPipe
+    );
+}
+
 fn policy() -> Policy {
     let program = Program::Script {
         path: concat!(env!("CARGO_MANIFEST_DIR"), "/examples/hello.py").into(),

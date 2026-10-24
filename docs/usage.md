@@ -40,9 +40,11 @@ script you run is readable, so sibling imports work. `-m` makes the current
 directory readable instead, as `sys.path[0]` would; `-c` grants nothing.
 Reads never imply writes and writes never imply reads.
 
-Inside the sandbox the program is a script, `-c` or `-m`. Isolation and
-buffering options (`-I -E -s -S -u -B -q`) are accepted because the sandbox
-already does what they ask; other interpreter options need `--no-sandbox`.
+Inside the sandbox the program is a script, `-c` or `-m`. The interpreter
+flags `-I -E -s -S -u -B -q` are accepted as no-ops; other interpreter options
+need `--no-sandbox`. Streams use normal CPython buffering. Use
+`print(..., flush=True)` for immediate output, or `--no-sandbox -u` for
+CPython's unrestricted, unbuffered CLI.
 
 ## `--json`
 
