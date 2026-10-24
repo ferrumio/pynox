@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::{
     fs::File,
-    io::{Read, Write},
+    io::{BufWriter, Read, Write},
     os::{
         fd::{AsRawFd, FromRawFd, RawFd},
         unix::process::{CommandExt, ExitStatusExt},
@@ -112,7 +112,8 @@ pub fn execute(invocation: &Invocation, start: Instant) -> i32 {
                     "error": {"type": "LauncherError", "message": format!("{error:#}")},
                     "stdout": "", "stderr": "", "duration_ms": start.elapsed().as_millis()
                 });
-                println!("{result}");
+                write_json_line(std::io::stdout().lock(), &result)
+                    .expect("Cannot write JSON result");
             } else {
                 eprintln!("pynox: {error:#}");
             }
@@ -124,7 +125,7 @@ pub fn execute(invocation: &Invocation, start: Instant) -> i32 {
 fn report(json: bool, result: &Value) -> i32 {
     let exit = result["exit"].as_i64().unwrap_or(125) as i32;
     if json {
-        println!("{result}");
+        write_json_line(std::io::stdout().lock(), result).expect("Cannot write JSON result");
         return exit;
     }
     // Output already went to the terminal. Python exceptions printed their
@@ -143,6 +144,16 @@ fn report(json: bool, result: &Value) -> i32 {
         }
     }
     exit
+}
+
+/// Batch the serializer's small writes (notably escaped print newlines), with
+/// bounded extra memory. Flush each complete report before returning.
+pub fn write_json_line(writer: impl Write, result: &Value) -> Result<()> {
+    let mut writer = BufWriter::new(writer);
+    serde_json::to_writer(&mut writer, result)?;
+    writer.write_all(b"\n")?;
+    writer.flush()?;
+    Ok(())
 }
 
 pub fn supervise(invocation: &Invocation, start: Instant) -> Result<Value> {

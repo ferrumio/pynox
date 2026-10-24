@@ -32,13 +32,14 @@ class Pool:
         assert ready["event"] == "ready", ready
         self.sequence = 0
 
-    def run(self, script, root):
+    def run(self, script, root, max_output):
         self.sequence += 1
         request = {
             "id": self.sequence,
             "script": str(script),
             "allow_read": [str(root)],
             "allow_write": [str(root)],
+            "max_output": max_output,
         }
         start = time.perf_counter_ns()
         self.process.stdin.write(json.dumps(request) + "\n")
@@ -76,6 +77,10 @@ def main():
         root = Path(temporary)
         workloads = {
             "empty": ("print('ok')\n", "ok\n"),
+            "print_200000": (
+                "for i in range(200000): print(i)\n",
+                "".join(f"{i}\n" for i in range(200000)),
+            ),
             "python_cpu": (
                 "print(sum(i*i for i in range(200000)))\n",
                 f"{sum(i * i for i in range(200000))}\n",
@@ -119,13 +124,15 @@ def main():
             for workload, details in workloads.items():
                 script = root / f"workload_{workload}.py"
                 script.write_text(details[0])
+                max_output = max(65536, len(details[1].encode()))
                 for repetition in range(-1, 7):  # one discarded warmup per mode
                     modes = list(MODES)
                     rng.shuffle(modes)
                     for mode in modes:
                         if mode == "pool":
-                            report, duration = pool.run(script, root)
+                            report, duration = pool.run(script, root, max_output)
                             assert report["exit"] == 0, report
+                            assert not report["stdout_truncated"], (workload, mode)
                             output = report["stdout"]
                         else:
                             if mode == "cpython":
@@ -135,7 +142,7 @@ def main():
                             else:
                                 command = [str(BINARY)]
                                 if mode == "json":
-                                    command.append("--json")
+                                    command += ["--json", f"--max-output={max_output}"]
                                 command += [
                                     f"--allow-read={root}",
                                     f"--allow-write={root}",
@@ -151,6 +158,7 @@ def main():
                             if mode == "json":
                                 report = json.loads(output)
                                 assert report["exit"] == 0, report
+                                assert not report["stdout_truncated"], (workload, mode)
                                 output = report["stdout"]
                         assert output == details[1], (workload, mode, output)
                         if workload.startswith("json"):
@@ -211,6 +219,9 @@ def main():
             "memory": "Not measured in this run; see historical research for prior observations",
             "input_bytes": {
                 name: data[3] for name, data in workloads.items() if name.startswith("json")
+            },
+            "expected_stdout_bytes": {
+                name: len(data[1].encode()) for name, data in workloads.items()
             },
             "sources": {
                 str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()

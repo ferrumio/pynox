@@ -26,7 +26,12 @@ def _pynox_prepare(script, argv0, args, package_dirs, site_packages, source, mod
     sys.dont_write_bytecode = True
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
-            stream.reconfigure(line_buffering=True, write_through=True)
+            # Pool children inherit streams initialized against /dev/null.
+            # Recheck the task's descriptors after the fork, as CPython does
+            # at startup: stdout follows isatty(), stderr is line-buffered.
+            stream.reconfigure(
+                line_buffering=stream is sys.stderr or stream.isatty(), write_through=False
+            )
 
 
 def _pynox_main(script, source):

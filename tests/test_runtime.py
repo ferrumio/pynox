@@ -79,6 +79,44 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result["exit"], 1, result)
         self.assertEqual(result["error"]["type"], "PermissionError", result)
 
+    def test_buffered_output_survives_completion_exception_and_sys_exit(self):
+        for ending, exit_code, error in (
+            ("", 0, None),
+            ("raise ValueError('after printing')", 1, "ValueError"),
+            ("sys.exit(7)", 7, None),
+        ):
+            with self.subTest(ending=ending):
+                result = self.run_code(
+                    "import sys\n"
+                    "for i in range(3000): print(i)\n"
+                    "print('stdout tail', end='')\n"
+                    "print('stderr tail', end='', file=sys.stderr)\n" + ending
+                )
+                self.assertEqual(result["exit"], exit_code, result)
+                self.assertEqual(
+                    result["stdout"], "".join(f"{i}\n" for i in range(3000)) + "stdout tail"
+                )
+                self.assertEqual(result["stderr"], "stderr tail")
+                self.assertFalse(result["stdout_truncated"])
+                self.assertFalse(result["stderr_truncated"])
+                self.assertEqual(
+                    result["error"]["type"] if result["error"] else None, error, result
+                )
+
+    def test_timeout_retains_flushed_output_but_can_lose_buffered_tail(self):
+        result = self.run_code(
+            "import sys\n"
+            "print('visible', flush=True)\n"
+            "print('pending', end='')\n"
+            "sys.stderr.write('visible\\n')\n"
+            "sys.stderr.write('pending')\n"
+            "while True: pass\n",
+            "--timeout=1s",
+        )
+        self.assertEqual(result["error"]["type"], "TimeoutError", result)
+        self.assertEqual(result["stdout"], "visible\n")
+        self.assertEqual(result["stderr"], "visible\n")
+
     def test_cpython_stdlib_native_extension_and_args(self):
         result = self.run_code(
             """

@@ -2,6 +2,11 @@
 
 ## 0.1.0 — unreleased
 
+- Restore CPython stdio buffering in sandboxed tasks, removing excessive
+  writes from print-heavy scripts. Flush output before task/session reports
+  and before forking preloaded templates; retain terminal prompts and
+  line-buffered stderr. Batch the supervisor's JSON writes without changing
+  result bytes or pool framing. Timeout/SIGKILL can discard unflushed output.
 - Introduce Pynox as a pre-alpha, agent-first Python runtime: a Rust launcher
   embedding CPython 3.11–3.15, with 3.11 as the default and per-minor pins.
 - Sandbox `pynox script.py`, `-c` and `-m` by default with Python's own
