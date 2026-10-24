@@ -188,8 +188,10 @@ wrong, it fails as a test; it does not touch your home directory.
 
 `tests/test_agent_examples.py` runs the same three agents in CI with scripted
 models: Pydantic AI's `FunctionModel` makes fixed tool calls, and the Strands
-tool is invoked directly. The framework, the tool schema it builds, the pool,
-the sandbox and the host functions are all real; only the model is replaced.
+agent loop is driven by a scripted `Model` that emits the same stream events
+`BedrockModel` would. The framework, the agent loop, the tool schema it builds,
+the pool, the sandbox and the host functions are all real; only the model is
+replaced.
 
 ## Next
 
