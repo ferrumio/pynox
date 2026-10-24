@@ -74,9 +74,14 @@ class PreloadedRuntimeTests(pool_tests.PoolRuntimeTests):
     def test_preload_output_is_not_inherited_by_jobs(self):
         self.close_pool()
         (self.root / "trusted/cached_package.py").write_text(
-            "import sys\n"
+            "import os, sys\n"
             "print('template stdout', end='')\n"
             "print('template stderr', end='', file=sys.stderr)\n"
+            "def pending(text):\n"
+            "    print(text, end='')\n"
+            "    print(text, end='', file=sys.stderr)\n"
+            "os.register_at_fork(before=lambda: pending('before fork'))\n"
+            "os.register_at_fork(after_in_parent=lambda: pending('in parent'))\n"
         )
         self.start_pool()
         for _ in range(2):

@@ -24,8 +24,9 @@ Pynox flags.
 Standard streams use CPython's default buffering: stdout is block-buffered
 for a pipe or file and line-buffered for a terminal; stderr is line-buffered.
 After a pool fork, buffering follows the child's remapped descriptors.
-Trusted preload output is flushed to the template's null device before
-forking, so jobs cannot inherit pending output. Both streams are flushed
+Trusted preload output, including before-fork and parent-hook output, is
+flushed to the template's null device before forking, so jobs cannot inherit
+pending output. Both streams are flushed
 before a task or session-step report, including exceptions and `sys.exit`;
 normal interpreter finalization still runs `atexit` handlers.
 The supervisor batches JSON serialization writes through a bounded buffer

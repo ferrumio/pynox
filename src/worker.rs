@@ -303,8 +303,12 @@ pub fn preload(config: &TemplateConfig) -> Result<()> {
     let modules = serde_json::to_string(&serde_json::to_string(&config.modules)?)?;
     // Flush trusted import output to the template's /dev/null before children
     // inherit the buffers and remap stdout/stderr to their capture pipes.
+    // Register before importing: before-fork callbacks run in reverse order,
+    // so this also drains output from preload hooks, including the prior
+    // fork's parent callbacks, before the next child inherits the buffers.
     python_code(&format!(
-        "import sys, json\n\
+        "import os, sys, json\n\
+         os.register_at_fork(before=lambda: (sys.stdout.flush(), sys.stderr.flush()))\n\
          sys.path.extend(json.loads({directories}))\n\
          import importlib, gc\n\
          for _preload_name in json.loads({modules}): importlib.import_module(_preload_name)\n\

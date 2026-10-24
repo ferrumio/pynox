@@ -42,16 +42,16 @@ End-to-end median, milliseconds:
 
 | Mode | 200k prints before | After | Improvement |
 | --- | ---: | ---: | ---: |
-| CPython | 55.99 | 56.46 | control |
-| `--no-sandbox` | 59.10 | 59.69 | control |
-| `pynox` | 243.02 | 61.65 | 3.94× |
-| `--json`, full capture | 428.38 | 64.84 | 6.61× |
-| Pool, full capture | 263.36 | 57.48 | 4.58× |
+| CPython | 55.99 | 55.62 | control |
+| `--no-sandbox` | 59.10 | 58.83 | control |
+| `pynox` | 243.02 | 61.03 | 3.98× |
+| `--json`, full capture | 428.38 | 63.97 | 6.70× |
+| Pool, full capture | 263.36 | 59.52 | 4.42× |
 
-The final default mode is 9.2% above CPython. **Full JSON capture remains
-14.9% above CPython**, so this experiment does not establish the issue's
+The final default mode is 9.7% above CPython. **Full JSON capture remains
+15.0% above CPython**, so this experiment does not establish the issue's
 within-10% target for an untruncated result. It does remove the excessive
-per-print writes. The pool is within 1.8% of CPython while returning all output.
+per-print writes. The pool is within 7.0% of CPython while returning all output.
 
 With only Python buffering fixed, JSON took 68.39 ms and the pool 67.70 ms.
 Batching the serializer's small writes helps both without allocating another
@@ -61,12 +61,12 @@ Tiny-script startup:
 
 | Mode | Before | After | Difference |
 | --- | ---: | ---: | ---: |
-| CPython | 7.324 | 7.475 | +0.151 ms |
-| `pynox` | 10.075 | 10.234 | +0.159 ms |
-| `--json` | 10.164 | 10.328 | +0.163 ms |
-| Pool | 4.332 | 4.570 | +0.238 ms |
+| CPython | 7.324 | 7.188 | −0.136 ms |
+| `pynox` | 10.075 | 9.973 | −0.102 ms |
+| `--json` | 10.164 | 10.120 | −0.044 ms |
+| Pool | 4.332 | 4.292 | −0.040 ms |
 
-No measured startup increase exceeds 0.5 ms. The controls also shifted;
+No startup regression was measured in this run. The controls also shifted;
 these are single-host observations, not significance estimates or promises
 for every platform. Other workloads and all samples remain in the raw reports.
 
@@ -77,10 +77,10 @@ affinity and output validation. With the default JSON capture limit:
 
 | Command | Before | After | After vs CPython |
 | --- | ---: | ---: | ---: |
-| CPython | 56.40 ms | 56.40 ms | control |
-| `pynox prints.py` | 234.52 ms | 61.41 ms | +8.9% |
-| `pynox --json prints.py` | 405.11 ms | 59.11 ms | +4.8% |
-| `pynox --json --max-output=1288890 prints.py` | 424.40 ms | 64.47 ms | +14.3% |
+| CPython | 57.22 ms | 57.22 ms | control |
+| `pynox prints.py` | 240.29 ms | 61.69 ms | +7.8% |
+| `pynox --json prints.py` | 407.51 ms | 59.27 ms | +3.6% |
+| `pynox --json --max-output=1288890 prints.py` | 418.19 ms | 64.51 ms | +12.7% |
 
 **The default JSON command truncates at 65,536 bytes**, and the benchmark
 asserts the exact prefix and `stdout_truncated=true`. It meets the issue's
@@ -104,7 +104,8 @@ report contains all 15 untraced observations per command and the trace summaries
 Stdout follows CPython's pipe/file versus terminal buffering, stderr stays
 line-buffered, and terminal prompts are tested with a PTY. Completion,
 exceptions, `sys.exit` and session-step boundaries flush pending output.
-Trusted preload output is flushed to `/dev/null` before the template forks.
+Trusted preload output, including before-fork and parent-hook output, is
+flushed to `/dev/null` before the template forks.
 The serializer uses a bounded `BufWriter`, retaining the same JSON bytes
 and flushing each response under the output lock.
 
@@ -118,5 +119,5 @@ runs per mode, with stdout drained through a pipe. This is the maximum RSS
 of an individual process reported by GNU time, **not aggregate process-tree
 memory**, and does not measure concurrent pool memory.
 Median maximum RSS was 23,056 KiB before and 22,940 KiB after for each Pynox
-command, versus 12,392 KiB for CPython. No peak RSS increase was observed;
+command, versus 12,376 KiB for CPython. No peak RSS increase was observed;
 the small decrease is not treated as a memory optimization.
