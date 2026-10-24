@@ -55,6 +55,14 @@ with Monty from the `integration` group). CI runs every Python/platform
 combination: glibc and musl Linux on x86_64 and ARM64.
 See [the test guide](tests/README.md) for the coverage split.
 
+## Code of Conduct
+
+All contributors are expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+See the [good first issues](https://github.com/ferrumio/pynox/labels/good%20first%20issue)
+for scoped contributions suitable for newcomers.
+
 Python integration tests exercise the actual kernel, native calls and child
 processes. Do not replace permission checks with mocks or silently skip unsupported hosts.
 Optimization tests need a stock CPython reference, values/errors/side effects,

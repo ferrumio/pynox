@@ -1,0 +1,11 @@
+﻿blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://ferrumio.github.io/pynox/
+    about: Read the Pynox documentation.
+  - name: Use cases
+    url: https://ferrumio.github.io/pynox/guides/use-cases/
+    about: Explore Pynox use cases and examples.
+  - name: Private security reporting
+    url: https://github.com/ferrumio/pynox/security/advisories/new
+    about: Report security vulnerabilities privately.
